@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Your contact</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="main">
+    <section class="main_section">
+        <div class="mobile">
+            <div class="screen">
+                <img class="status_bar" src="status_bar.png"/>
+                <div class="outer">
+                    <div class="inner">
+                        <div class="haed">
+                            <h3 class="haeding">Контакты</h3>
+                            <span class="add">Добавить</span>
+                        </div>
+                        <div class="list_c">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+    <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script>
+    let dop_field= [
+        {
+            id:'mail',
+            name: 'Почта'
+        },
+        {
+            id:'skype',
+            name: 'Skype'
+        },
+        {
+            id:'vk',
+            name: 'Вконтакте'
+        },
+        {
+            id:'whatsapp',
+            name: 'WhatsApp'
+        },
+        {
+            id:'ok',
+            name: 'Одноклассники'
+        },
+        {
+            id:'tw',
+            name: 'Twitter'
+        }
+
+    ];
+        
+    $(document).on("keydown", 'input[name="number"]', function(e) {//проверка телефона
+        if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+            (e.keyCode == 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+            (e.keyCode == 67 && (e.ctrlKey === true || e.metaKey === true)) ||
+            (e.keyCode == 88 && (e.ctrlKey === true || e.metaKey === true)) ||
+            (e.keyCode >= 35 && e.keyCode <= 39)) {
+                 return;
+        }
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+        
+    $.ajax({//запрашиваем весь список
+        type: "GET",
+        url: '/contacts/',
+        success: function(data) {
+            for (let i = 0; i < data.length; i++) {
+                $('.list_c').append('<li class="list_item" data-firstName="'+data[i].firstName+'" data-lastName="'+data[i].lastName+'"><strong>'+data[i].lastName+' </strong>'+data[i].firstName+'</li>');
+            }
+        }
+    });
+        
+    $(document).on("click", '.list_item, .to_contact', function(event) {//для отображения конретного контакта
+        let lastName = $(this).data('lastname');
+        let firstName = $(this).data('firstname');
+        let newField=[],
+            dop_str='';
+        $.ajax({
+        type: "GET",
+        url: '/contacts/user/',
+        data: {lastName:lastName,firstName:firstName},
+        success: function(data) {
+            let string = '<div class="top_user"><div class="round">'+data[0].lastName.charAt(0) + data[0].firstName.charAt(0)+'</div>'+
+                '<span>'+data[0].lastName+' '+data[0].firstName+'</span></div>'+
+                '<div class="cont_el">'+
+                '<span class="head_c_el">Телефон</span>'+
+                '<span class="c_el">'+data[0].number+'</span>'+
+                '</div>';
+            $('.list_c').html(string);
+            for (let i = 0; i < Object.keys(data[0].field).length; i++) {
+                for(let j = 0; j < dop_field.length; j++)
+                {
+                    if(dop_field[j].id==Object.keys(data[0].field)[i])
+                    {
+                        newField.push({id:dop_field[j].id,name:dop_field[j].name,value:data[0].field[Object.keys(data[0].field)[i]]});
+                    }
+                }
+            }
+            for (let i = 0; i < newField.length; i++) {
+                dop_str+='<div class="cont_el">'+
+                '<span class="head_c_el">'+newField[i].name+'</span>'+
+                '<span class="c_el">'+newField[i].value+'</span>'+
+                '</div>';
+            }
+            $('.list_c').append(dop_str);
+            $('.list_c').append('<span class="delete" data-firstName="'+data[0].firstName+'" data-lastName="'+data[0].lastName+'">Удалить</span>');
+            let st_bar = '<div class="new_bar">'+
+                '<span class="all_c"><strong><</strong>Контакты</span>'+
+                '<span class="edit" data-firstName="'+data[0].firstName+'" data-lastName="'+data[0].lastName+'">Изменить</span>'+
+                '</div>';
+            $('.haed').html(st_bar);
+        }
+        });
+    });
+        
+    $(document).on("click", '.all_c', function(event) {//выход от конкретного контакта ко всем
+        let lastName = $(this).data('lastname');
+        let firstName = $(this).data('firstname');
+        $.ajax({
+        type: "GET",
+        url: '/contacts/',
+        success: function(data) {
+            $('.list_c').empty();
+            for (let i = 0; i < data.length; i++) {
+                $('.list_c').append('<li class="list_item" data-firstName="'+data[i].firstName+'" data-lastName="'+data[i].lastName+'"><strong>'+data[i].lastName+' </strong>'+data[i].firstName+'</li>');
+            }
+            $('.haed').html('<h3 class="haeding">Контакты</h3><span class="add">Добавить</span>');
+        }
+        });
+    });
+        
+    $(document).on("click", '.edit', function(event) {//изменение контакта
+        let lastName = $(this).data('lastname');
+        let firstName = $(this).data('firstname');
+        let newField=[],
+            dop_str='';
+        $.ajax({
+        type: "GET",
+        url: '/contacts/user/',
+        data: {lastName:lastName,firstName:firstName},
+        success: function(data) {
+            let string = '<div class="cont_el">'+
+                        '<span class="head_c_el">Имя</span>'+
+                        '<input type="text" class="c_inp" name="firstName" value="'+data[0].firstName+'"/>'+
+                        '</div>'+
+                        '<div class="cont_el">'+
+                        '<span class="head_c_el">Фамилия</span>'+
+                        '<input type="text" class="c_inp" name="lastName" value="'+data[0].lastName+'"/>'+
+                        '</div>'+
+                        '<div class="cont_el">'+
+                        '<span class="head_c_el">телефон</span>'+
+                        '<input type="text" class="c_inp" name="number" maxlength="11" value="'+data[0].number+'"/>'+
+                        '</div>';
+            for (let i = 0; i < Object.keys(data[0].field).length; i++) {
+                for(let j = 0; j < dop_field.length; j++)
+                {
+                    if(dop_field[j].id==Object.keys(data[0].field)[i])
+                    {
+                        newField.push({id:dop_field[j].id,name:dop_field[j].name,value:data[0].field[Object.keys(data[0].field)[i]]});
+                    }
+                }
+            }
+            for (let i = 0; i < dop_field.length; i++) {
+                let value_dop='';
+                for (let j = 0; j < newField.length; j++) {
+                    if(dop_field[i].id==newField[j].id)
+                    {
+                        value_dop = newField[j].value;
+                    }
+                }
+                string+='<div class="cont_el">'+
+                        '<span class="head_c_el field">'+dop_field[i].name+'</span>'+
+                        '<input type="text" class="c_inp cust_field" maxlength="25" name="'+dop_field[i].id+'"value="'+value_dop+'"/>'+
+                        '</div>';
+            }
+            $('.list_c').html(string);
+            let st_bar = '<div class="new_bar">'+
+                '<span class="to_contact" data-firstName="'+data[0].firstName+'" data-lastName="'+data[0].lastName+'"><strong><</strong>Назад</span>'+
+                '<span class="editning" data-firstName="'+data[0].firstName+'" data-lastName="'+data[0].lastName+'">Готово</span>'+
+                '</div>';
+            $('.haed').html(st_bar);
+        }
+        });
+    });
+        
+    $(document).on("click", '.editning', function(event) {//обработака измененных данных и показ данного контакта
+        let firstName = $("input[name='firstName']").val();
+        let lastName = $("input[name='lastName']").val();
+        let lastName_old = $(this).data('lastname');
+        let firstName_old = $(this).data('firstname');
+        let number = $("input[name='number']").val();
+        let err=0;
+        let data = {};
+        if(firstName=='')
+        {
+            err+=1;
+            $("input[name='firstName']").addClass('err');
+
+        }
+        else if(firstName!='' && $("input[name='firstName']").hasClass('err'))
+        {
+            $("input[name='firstName']").removeClass('err');
+        }
+        if(lastName=='')
+        {
+            err+=1;
+            $("input[name='lastName']").addClass('err');
+        }
+        else if(lastName!='' && $("input[name='lastName']").hasClass('err'))
+        {
+            $("input[name='lastName']").removeClass('err');
+        }
+        if(number=='')
+        {
+            err+=1;
+            $("input[name='number']").addClass('err');
+        }
+        else if(number!='' && $("input[name='number']").hasClass('err'))
+        {
+            $("input[name='number']").removeClass('err');
+        }
+        if(err>0)
+        {
+            console.log('err');
+            return;
+        }
+        else
+        {
+            data.firstName = firstName;
+            data.lastName = lastName;
+            data.number = number;
+            data.field = {};
+            $( ".c_inp.cust_field" ).each(function() {
+                if($(this).val()!=''){
+                    data.field[$(this).attr('name')] = $(this).val();
+                }
+            });
+            if($('.editning').hasClass('new'))
+                {
+                    var url = '/contacts/user/add/';
+                }
+            else{
+                var url = '/contacts/user/edit/';
+            }
+            console.log(url);
+            $.ajax({
+                type: "GET",
+                url: url,
+                data: {data, lastName:lastName_old,firstName:firstName_old},
+                success: function(data) {
+                    let newField=[],
+                    dop_str='';
+                    let string = '<div class="top_user"><div class="round">'+data[0].lastName.charAt(0) + data[0].firstName.charAt(0)+'</div>'+
+                    '<span>'+data[0].lastName+' '+data[0].firstName+'</span></div>'+
+                    '<div class="cont_el">'+
+                    '<span class="head_c_el">Телефон</span>'+
+                    '<span class="c_el">'+data[0].number+'</span>'+
+                    '</div>';
+                    $('.list_c').html(string);
+                    for (let i = 0; i < Object.keys(data[0].field).length; i++) {
+                        for(let j = 0; j < dop_field.length; j++)
+                        {
+                            if(dop_field[j].id==Object.keys(data[0].field)[i])
+                            {
+                                newField.push({id:dop_field[j].id,name:dop_field[j].name,value:data[0].field[Object.keys(data[0].field)[i]]});
+                            }
+                        }
+                    }
+                    for (let i = 0; i < newField.length; i++) {
+                        dop_str+='<div class="cont_el">'+
+                        '<span class="head_c_el">'+newField[i].name+'</span>'+
+                        '<span class="c_el">'+newField[i].value+'</span>'+
+                        '</div>';
+                    }
+                    $('.list_c').append(dop_str);
+                    $('.list_c').append('<span class="delete" data-firstName="'+data[0].firstName+'" data-lastName="'+data[0].lastName+'">Удалить</span>');
+                    let st_bar = '<div class="new_bar">'+
+                        '<span class="all_c"><strong><</strong>Контакты</span>'+
+                        '<span class="edit" data-firstName="'+data[0].firstName+'" data-lastName="'+data[0].lastName+'">Изменить</span>'+
+                        '</div>';
+                    $('.haed').html(st_bar);
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '.delete', function(event) {//удаление контакта
+        let lastName = $(this).data('lastname');
+        let firstName = $(this).data('firstname');
+        let data
+        $.ajax({
+        type: "GET",
+        url: '/contacts/user/delete/',
+        data: {lastName:lastName,firstName:firstName},
+        success: function(data) {
+           $('.list_c').empty();
+            for (let i = 0; i < data.length; i++) {
+                $('.list_c').append('<li class="list_item" data-firstName="'+data[i].firstName+'" data-lastName="'+data[i].lastName+'"><strong>'+data[i].lastName+' </strong>'+data[i].firstName+'</li>');
+            }
+            $('.haed').html('<h3 class="haeding">Контакты</h3>');
+        }
+        });
+    });
+
+    $(document).on("click", '.add', function(event) {//добавление контакта
+            let string = '<div class="cont_el">'+
+                        '<span class="head_c_el">Имя</span>'+
+                        '<input type="text" class="c_inp" name="firstName" value=""/>'+
+                        '</div>'+
+                        '<div class="cont_el">'+
+                        '<span class="head_c_el">Фамилия</span>'+
+                        '<input type="text" class="c_inp" name="lastName" value=""/>'+
+                        '</div>'+
+                        '<div class="cont_el">'+
+                        '<span class="head_c_el">телефон</span>'+
+                        '<input type="text" class="c_inp" name="number" maxlength="11" value=""/>'+
+                        '</div>';
+            for (let i = 0; i < dop_field.length; i++) {
+                string+='<div class="cont_el">'+
+                        '<span class="head_c_el field">'+dop_field[i].name+'</span>'+
+                        '<input type="text" class="c_inp cust_field" maxlength="25" name="'+dop_field[i].id+'"value=""/>'+
+                        '</div>';
+            }
+            $('.list_c').html(string);
+            let st_bar = '<div class="new_bar">'+
+                '<span class="all_c"><strong><</strong>Контакты</span>'+
+                '<span class="editning new">Готово</span>'+
+                '</div>';
+            $('.haed').html(st_bar);
+    });
+
+    </script>
+</html>

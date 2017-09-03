@@ -1,0 +1,16 @@
+{
+    "name": "lesson3_2",
+    "version": "1.0.0",
+    "description": "none",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Savenkov",
+    "license": "MIT",
+    "dependencies": {
+        "express": "*",
+        "mongodb": "*",
+        "body-parser": "*"
+    }
+}
